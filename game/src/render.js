@@ -19,6 +19,22 @@ function txt(ctx, s, x, y, size, color, align, bold) {
   ctx.fillText(s, x, y);
 }
 
+// Palet + ukuran konsisten untuk semua panel/kartu/tombol (gaya menyatu).
+const PAL = { ink: '#2b2b3a', line: '#3d405b', gold: '#ffd166', cream: '#fff8e7' };
+const R_PANEL = 12, R_CARD = 10, LINE_W = 3;
+
+// Teks dengan outline gelap — tetap terbaca di atas latar ramai / saat diperkecil.
+function txtO(ctx, s, x, y, size, color, align, bold) {
+  ctx.font = (bold ? 'bold ' : '') + size + 'px Verdana, sans-serif';
+  ctx.textAlign = align || 'left';
+  ctx.textBaseline = 'middle';
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = 'rgba(30,20,10,.55)';
+  ctx.strokeText(s, x, y);
+  ctx.fillStyle = color;
+  ctx.fillText(s, x, y);
+}
+
 function circle(ctx, x, y, r, color) {
   ctx.fillStyle = color;
   ctx.beginPath();
@@ -194,6 +210,9 @@ function drawTimerBar(ctx, x, y, w, h, frac) {
   rr(ctx, x, y, w, h, h / 2);
   ctx.fillStyle = '#20262e';
   ctx.fill();
+  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = 'rgba(255,255,255,.28)';
+  ctx.stroke();
   if (f > 0.02) {
     const col = f > 0.5 ? '#2ec4b6' : f > 0.25 ? '#ffb703' : '#ef476f';
     rr(ctx, x + 2, y + 2, (w - 4) * f, h - 4, (h - 4) / 2);
@@ -202,46 +221,52 @@ function drawTimerBar(ctx, x, y, w, h, frac) {
   }
 }
 
-function drawButton(ctx, x, y, w, h, label, enabled, hot) {
-  rr(ctx, x + 2, y + 4, w, h, 10);
-  ctx.fillStyle = 'rgba(0,0,0,.25)';
+function drawButton(ctx, x, y, w, h, label, enabled, hot, pressed) {
+  const py = pressed ? y + 2 : y;
+  rr(ctx, x + 2, py + 4, w, h, R_CARD);
+  ctx.fillStyle = pressed ? 'rgba(0,0,0,.12)' : 'rgba(0,0,0,.25)';
   ctx.fill();
-  const g = ctx.createLinearGradient(x, y, x, y + h);
+  const g = ctx.createLinearGradient(x, py, x, py + h);
   if (!enabled) { g.addColorStop(0, '#6b7d8c'); g.addColorStop(1, '#546575'); }
   else if (hot) { g.addColorStop(0, '#ffe082'); g.addColorStop(1, '#ffb703'); }
   else { g.addColorStop(0, '#37b3a5'); g.addColorStop(1, '#1f7a6e'); }
-  rr(ctx, x, y, w, h, 10);
+  rr(ctx, x, py, w, h, R_CARD);
   ctx.fillStyle = g;
   ctx.fill();
+  if (pressed) {
+    rr(ctx, x, py, w, h, R_CARD);
+    ctx.fillStyle = 'rgba(0,0,0,.18)';
+    ctx.fill();
+  }
   ctx.lineWidth = 2;
   ctx.strokeStyle = hot ? '#fff3d6' : 'rgba(0,0,0,.35)';
   ctx.stroke();
   if (hot) {
     ctx.strokeStyle = 'rgba(255,209,102,.8)';
     ctx.lineWidth = 4;
-    rr(ctx, x - 3, y - 3, w + 6, h + 6, 12);
+    rr(ctx, x - 3, py - 3, w + 6, h + 6, R_CARD + 2);
     ctx.stroke();
   }
-  txt(ctx, label, x + w / 2, y + h / 2 + 1, 20, enabled ? '#10231f' : '#d7dee5', 'center', true);
+  txt(ctx, label, x + w / 2, py + h / 2 + 1, 20, enabled ? '#10231f' : '#d7dee5', 'center', true);
 }
 
 // Kartu pesanan: nama resep + ikon bahan + bar timer.
 function drawOrderCard(ctx, o, x, y, w, h) {
   const urgent = !o.done && !o.failed && o.t <= 5;
-  rr(ctx, x, y, w, h, 10);
+  rr(ctx, x, y, w, h, R_CARD);
   ctx.fillStyle = o.done ? '#2a9d8f' : (urgent ? '#ffe3e3' : '#fff8e7');
   ctx.fill();
-  ctx.lineWidth = urgent ? 4 : 2;
+  ctx.lineWidth = urgent ? 4 : LINE_W;
   ctx.strokeStyle = (o.failed || urgent) ? '#ef476f' : '#d9a441';
   ctx.stroke();
-  txt(ctx, o.recipe.name, x + 12, y + 18, 16, '#333333', 'left', true);
+  txt(ctx, o.recipe.name, x + 12, y + 18, 17, '#222222', 'left', true);
   let ix = x + 16;
   for (const k of o.recipe.items) {
-    drawIngredient(ctx, k, ix + 16, y + 48, 30, 'mentah');
-    ix += 40;
+    drawIngredient(ctx, k, ix + 16, y + 48, 32, 'mentah');
+    ix += 42;
   }
   drawTimerBar(ctx, x + 12, y + h - 18, w - 24, 10, o.t / o.max);
-  txt(ctx, Math.ceil(o.t) + ' dtk', x + w - 12, y + 18, 14, urgent ? '#d62828' : '#555555', 'right', true);
+  txt(ctx, Math.ceil(o.t) + ' dtk', x + w - 12, y + 18, 15, urgent ? '#d62828' : '#444444', 'right', true);
   if (urgent) {
     circle(ctx, x + w - 14, y + h - 34, 11, '#ef476f');
     txt(ctx, '!', x + w - 14, y + h - 33, 14, '#ffffff', 'center', true);

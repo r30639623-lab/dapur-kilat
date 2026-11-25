@@ -29,6 +29,17 @@ function panelShadow(ctx, x, y, w, h) {
   ctx.fill();
 }
 
+// Panel seragam: bayangan + isi + garis tepi 3px warna garis palet, sudut 12.
+function panel(ctx, x, y, w, h, fill) {
+  panelShadow(ctx, x, y, w, h);
+  rr(ctx, x, y, w, h, R_PANEL);
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.lineWidth = LINE_W;
+  ctx.strokeStyle = PAL.line;
+  ctx.stroke();
+}
+
 function hitBin(x, y) {
   for (const b of LAYOUT.bins) {
     if (pointIn(b, x, y)) return b.kind;
@@ -70,7 +81,7 @@ function drawKitchen(ctx, G) {
   rr(ctx, LAYOUT.board.x, LAYOUT.board.y, LAYOUT.board.w, LAYOUT.board.h, 12);
   ctx.fillStyle = '#3d405b';
   ctx.fill();
-  txt(ctx, 'PAPAN PESANAN', 24, 30, 15, '#ffd166', 'left', true);
+  txt(ctx, 'PAPAN PESANAN', 24, 30, 16, '#ffd166', 'left', true);
   let cx = 180;
   for (let i = 0; i < 3; i++) {
     const o = G.orders[i];
@@ -88,8 +99,17 @@ function drawKitchen(ctx, G) {
   rr(ctx, LAYOUT.scoreBox.x, LAYOUT.scoreBox.y, LAYOUT.scoreBox.w, LAYOUT.scoreBox.h, 10);
   ctx.fillStyle = '#22223b';
   ctx.fill();
-  txt(ctx, 'SKOR  ' + G.score, LAYOUT.scoreBox.x + 16, LAYOUT.scoreBox.y + 24, 20, '#ffd166', 'left', true);
-  txt(ctx, 'Kombo x' + G.combo + '   •   Saji: ' + G.served, LAYOUT.scoreBox.x + 16, LAYOUT.scoreBox.y + 56, 15, '#e8eaf6', 'left');
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(255,209,102,.35)';
+  ctx.stroke();
+  txt(ctx, 'SKOR  ' + G.score, LAYOUT.scoreBox.x + 16, LAYOUT.scoreBox.y + 24, 24, '#ffd166', 'left', true);
+  ctx.strokeStyle = 'rgba(255,209,102,.35)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(LAYOUT.scoreBox.x + 16, LAYOUT.scoreBox.y + 44);
+  ctx.lineTo(LAYOUT.scoreBox.x + LAYOUT.scoreBox.w - 16, LAYOUT.scoreBox.y + 44);
+  ctx.stroke();
+  txt(ctx, 'Kombo x' + G.combo + '   •   Saji: ' + G.served, LAYOUT.scoreBox.x + 16, LAYOUT.scoreBox.y + 64, 15, '#e8eaf6', 'left');
   // papan menu kecil + jam dinding (strip kosong y 112..168)
   rr(ctx, 368, 118, 92, 44, 6);
   ctx.fillStyle = '#fff8e7';
@@ -109,12 +129,24 @@ function drawKitchen(ctx, G) {
   ctx.lineTo(1216 + Math.cos(ha) * 13, 140 + Math.sin(ha) * 13); ctx.stroke();
   ctx.beginPath(); ctx.moveTo(1216, 140);
   ctx.lineTo(1216, 140 - 9); ctx.stroke();
-  // kompor
-  panelShadow(ctx, LAYOUT.stove.x, LAYOUT.stove.y, LAYOUT.stove.w, LAYOUT.stove.h);
-  rr(ctx, LAYOUT.stove.x, LAYOUT.stove.y, LAYOUT.stove.w, LAYOUT.stove.h, 12);
-  ctx.fillStyle = '#37474f';
+  // rak dinding dengan toples — kedalaman latar (strip kosong y 112..168)
+  rr(ctx, 520, 150, 360, 8, 4);
+  ctx.fillStyle = '#6d4c41';
   ctx.fill();
-  txt(ctx, 'KOMPOR', LAYOUT.stove.x + 16, LAYOUT.stove.y + 22, 15, '#eceff1', 'left', true);
+  const jars = ['#e63946', '#57cc6a', '#ffd166'];
+  for (let j = 0; j < 3; j++) {
+    const jx = 560 + j * 130;
+    rr(ctx, jx, 116, 46, 34, 8);
+    ctx.fillStyle = jars[j];
+    ctx.fill();
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = 'rgba(0,0,0,.25)';
+    ctx.stroke();
+    circle(ctx, jx + 13, 128, 5, 'rgba(255,255,255,.45)');
+  }
+  // kompor
+  panel(ctx, LAYOUT.stove.x, LAYOUT.stove.y, LAYOUT.stove.w, LAYOUT.stove.h, '#37474f');
+  txt(ctx, 'KOMPOR', LAYOUT.stove.x + 16, LAYOUT.stove.y + 22, 16, '#eceff1', 'left', true);
   circle(ctx, LAYOUT.stove.x + 90, LAYOUT.stove.y + 120, 52, '#263238');
   circle(ctx, LAYOUT.stove.x + 190, LAYOUT.stove.y + 120, 52, '#263238');
   rr(ctx, LAYOUT.stove.x + 150, LAYOUT.stove.y + 92, 80, 56, 8);
@@ -132,6 +164,7 @@ function drawKitchen(ctx, G) {
     circle(ctx, LAYOUT.stove.x + 76, LAYOUT.stove.y - 6 - st, 9, 'rgba(255,255,255,.45)');
     circle(ctx, LAYOUT.stove.x + 104, LAYOUT.stove.y - 18 - ((st + 18) % 46), 7, 'rgba(255,255,255,.35)');
     circle(ctx, LAYOUT.stove.x + 90, LAYOUT.stove.y - 12 - ((st + 32) % 46), 6, 'rgba(255,255,255,.3)');
+    circle(ctx, LAYOUT.stove.x + 118, LAYOUT.stove.y - 10 - ((st + 40) % 46), 8, 'rgba(255,255,255,.4)');
     ctx.strokeStyle = 'rgba(255,255,255,.35)';
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -142,11 +175,8 @@ function drawKitchen(ctx, G) {
     drawTimerBar(ctx, LAYOUT.stove.x + 30, LAYOUT.stove.y + 190, 220, 12, G.toasting.prog);
   }
   // talenan
-  panelShadow(ctx, LAYOUT.cutBoard.x, LAYOUT.cutBoard.y, LAYOUT.cutBoard.w, LAYOUT.cutBoard.h);
-  rr(ctx, LAYOUT.cutBoard.x, LAYOUT.cutBoard.y, LAYOUT.cutBoard.w, LAYOUT.cutBoard.h, 12);
-  ctx.fillStyle = '#d7ccc8';
-  ctx.fill();
-  txt(ctx, 'TALENAN', LAYOUT.cutBoard.x + 16, LAYOUT.cutBoard.y + 22, 15, '#5d4037', 'left', true);
+  panel(ctx, LAYOUT.cutBoard.x, LAYOUT.cutBoard.y, LAYOUT.cutBoard.w, LAYOUT.cutBoard.h, '#d7ccc8');
+  txt(ctx, 'TALENAN', LAYOUT.cutBoard.x + 16, LAYOUT.cutBoard.y + 22, 16, '#5d4037', 'left', true);
   if (G.cutting) {
     const shown = G.cutting.cutting && G.cutting.prog > 0 ? 'potong' : 'mentah';
     drawIngredient(ctx, G.cutting.kind, LAYOUT.cutBoard.x + 170, LAYOUT.cutBoard.y + 100, 90, shown);
@@ -161,28 +191,20 @@ function drawKitchen(ctx, G) {
   // koki kecil di celah kompor-talenan
   drawChef(ctx, G);
   // area piring rakitan
-  panelShadow(ctx, LAYOUT.plateArea.x, LAYOUT.plateArea.y, LAYOUT.plateArea.w, LAYOUT.plateArea.h);
-  rr(ctx, LAYOUT.plateArea.x, LAYOUT.plateArea.y, LAYOUT.plateArea.w, LAYOUT.plateArea.h, 12);
-  ctx.fillStyle = '#eceff1';
-  ctx.fill();
-  txt(ctx, 'PIRING RAKITAN', LAYOUT.plateArea.x + 16, LAYOUT.plateArea.y + 22, 15, '#37474f', 'left', true);
+  panel(ctx, LAYOUT.plateArea.x, LAYOUT.plateArea.y, LAYOUT.plateArea.w, LAYOUT.plateArea.h, '#eceff1');
+  txt(ctx, 'PIRING RAKITAN', LAYOUT.plateArea.x + 16, LAYOUT.plateArea.y + 22, 16, '#37474f', 'left', true);
   drawPlate(ctx, G.plate, LAYOUT.plateArea.x + 150, LAYOUT.plateArea.y + 150, 110);
   // 4 kotak bahan di meja bawah
   for (const b of LAYOUT.bins) {
-    panelShadow(ctx, b.x, b.y, b.w, b.h);
-    rr(ctx, b.x, b.y, b.w, b.h, 12);
-    ctx.fillStyle = '#a1887f';
-    ctx.fill();
-    ctx.lineWidth = 3;
-    ctx.strokeStyle = '#6d4c41';
-    ctx.stroke();
-    drawIngredient(ctx, b.kind, b.x + b.w / 2, b.y + 62, 84, 'mentah');
+    panel(ctx, b.x, b.y, b.w, b.h, '#a1887f');
+    const pop = (G.popKind === b.kind) ? 1 + 0.22 * Math.max(0, 1 - (G.elapsed - G.popAt) / 0.25) : 1;
+    drawIngredient(ctx, b.kind, b.x + b.w / 2, b.y + 62, 84 * pop, 'mentah');
     txt(ctx, ING[b.kind].name, b.x + b.w / 2, b.y + 122, 17, '#ffffff', 'center', true);
-    txt(ctx, ING[b.kind].hint, b.x + b.w / 2, b.y + 142, 11, '#ffe0b2', 'center');
+    txt(ctx, ING[b.kind].hint, b.x + b.w / 2, b.y + 142, 12, '#ffe0b2', 'center');
   }
   // tombol
-  drawButton(ctx, LAYOUT.cutBtn.x, LAYOUT.cutBtn.y, LAYOUT.cutBtn.w, LAYOUT.cutBtn.h, 'POTONG', !!G.cutting, false);
-  drawButton(ctx, LAYOUT.serveBtn.x, LAYOUT.serveBtn.y, LAYOUT.serveBtn.w, LAYOUT.serveBtn.h, 'SAJIKAN', G.plate.length > 0, plateMatches(G));
+  drawButton(ctx, LAYOUT.cutBtn.x, LAYOUT.cutBtn.y, LAYOUT.cutBtn.w, LAYOUT.cutBtn.h, 'POTONG', !!G.cutting, false, G.pressBtn === 'cut' && (G.elapsed - G.pressAt) < 0.18);
+  drawButton(ctx, LAYOUT.serveBtn.x, LAYOUT.serveBtn.y, LAYOUT.serveBtn.w, LAYOUT.serveBtn.h, 'SAJIKAN', G.plate.length > 0, plateMatches(G), G.pressBtn === 'serve' && (G.elapsed - G.pressAt) < 0.18);
   // teks skor melayang
   for (const f of G.floaters) {
     ctx.globalAlpha = Math.max(0, Math.min(1, f.t));
@@ -197,9 +219,9 @@ function drawKitchen(ctx, G) {
   }
   // pesan + sisa waktu
   if (G.message) {
-    txt(ctx, G.message, LAYOUT.msg.x, LAYOUT.msg.y, 18, '#ffd166', 'center', true);
+    txtO(ctx, G.message, LAYOUT.msg.x, LAYOUT.msg.y, 18, '#ffd166', 'center', true);
   }
-  txt(ctx, 'Sisa waktu: ' + Math.max(0, Math.ceil(120 - G.elapsed)) + ' dtk', 1120, 692, 14, '#ffe0b2', 'center');
+  txt(ctx, 'Sisa waktu: ' + Math.max(0, Math.ceil(120 - G.elapsed)) + ' dtk', 1120, 692, 14, '#ffe0b2', 'center', true);
   if (G.state === 'menu') drawMenu(ctx, G);
   else if (G.state === 'over') drawOver(ctx, G);
 }
@@ -249,6 +271,9 @@ function drawMenu(ctx, G) {
   ctx.fillStyle = 'rgba(20, 30, 40, 0.72)';
   ctx.fillRect(0, 0, 1280, 720);
   txt(ctx, 'DAPUR KILAT', 640, 220, 64, '#ffd166', 'center', true);
+  rr(ctx, 520, 252, 240, 6, 3);
+  ctx.fillStyle = '#ffd166';
+  ctx.fill();
   txt(ctx, 'Game masak cepat — layani pesanan sebelum waktunya habis!', 640, 290, 20, '#ffffff', 'center');
   txt(ctx, '1. Klik bahan di meja bawah', 640, 350, 17, '#cfe3d8', 'center');
   txt(ctx, '2. Tomat & selada dipotong di talenan • Roti dipanggang di kompor', 640, 382, 17, '#cfe3d8', 'center');

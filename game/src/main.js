@@ -9,6 +9,7 @@ const G = {
   elapsed: 0, spawnT: 1.2,
   orders: [], plate: [], cutting: null, toasting: null,
   message: '', messageT: 0, floaters: [],
+  pressBtn: null, pressAt: -10, popKind: null, popAt: -10,
 };
 
 function startGame() {
@@ -57,10 +58,10 @@ canvas.addEventListener('click', (e) => {
   const p = canvasPos(e);
   if (G.state === 'menu' || G.state === 'over') { startGame(); return; }
   const btn = hitButton(p.x, p.y);
-  if (btn === 'cut') { doCut(G); return; }
-  if (btn === 'serve') { tryServe(G); return; }
+  if (btn === 'cut') { G.pressBtn = 'cut'; G.pressAt = G.elapsed; doCut(G); return; }
+  if (btn === 'serve') { G.pressBtn = 'serve'; G.pressAt = G.elapsed; tryServe(G); return; }
   const kind = hitBin(p.x, p.y);
-  if (kind) addIngredient(G, kind);
+  if (kind) { G.popKind = kind; G.popAt = G.elapsed; addIngredient(G, kind); }
 });
 
 document.addEventListener('keydown', (e) => {
