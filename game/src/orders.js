@@ -180,6 +180,16 @@ function demoPreset(G, kind) {
     G.toasting = { kind: 'roti', prog: 0.45 };
     G.plate = [{ kind: 'keju', prep: 'mentah' }];
     setMsg(G, 'Tomat dipotong, roti dipanggang…');
+  } else if (kind === 'rakit2') {
+    G.state = 'play';
+    G.orders = [
+      { id: 907, recipe: RECIPES[2], t: 30, max: 30, done: false, failed: false },
+      { id: 908, recipe: RECIPES[3], t: 18, max: 35, done: false, failed: false },
+    ];
+    G.plate = [{ kind: 'selada', prep: 'potong' }];
+    G.toasting = { kind: 'roti', prog: 0.6 };
+    G.score = 200; G.combo = 1; G.served = 1;
+    setMsg(G, 'Rakit Salad Segar: tambah tomat!');
   } else if (kind === 'saji') {
     G.state = 'play';
     G.orders = [

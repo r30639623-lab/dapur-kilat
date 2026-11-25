@@ -39,24 +39,47 @@ function drawIngredient(ctx, kind, x, y, s, prep) {
     if (prep === 'potong') {
       circle(ctx, x - s * 0.28, y, s * 0.42, '#e63946');
       circle(ctx, x + s * 0.28, y, s * 0.42, '#d62828');
-      circle(ctx, x - s * 0.28, y, s * 0.16, '#ff8fa3');
-      circle(ctx, x + s * 0.28, y, s * 0.16, '#ff8fa3');
+      circle(ctx, x - s * 0.28, y, s * 0.30, '#ff7a85');
+      circle(ctx, x + s * 0.28, y, s * 0.30, '#ff7a85');
+      circle(ctx, x - s * 0.28, y, s * 0.16, '#ffd6da');
+      circle(ctx, x + s * 0.28, y, s * 0.16, '#ffd6da');
+      circle(ctx, x - s * 0.38, y - s * 0.08, s * 0.05, '#fff3e0');
+      circle(ctx, x + s * 0.18, y + s * 0.08, s * 0.05, '#fff3e0');
     } else {
-      circle(ctx, x, y, s * 0.5, '#e63946');
-      circle(ctx, x - s * 0.14, y - s * 0.14, s * 0.16, '#ff6b6b');
+      circle(ctx, x, y, s * 0.52, '#c1121f');
+      circle(ctx, x, y, s * 0.48, '#e63946');
+      circle(ctx, x - s * 0.14, y - s * 0.16, s * 0.2, '#ff6b6b');
+      circle(ctx, x - s * 0.2, y - s * 0.2, s * 0.07, '#ffe5e5');
+      ctx.strokeStyle = '#2a9d8f';
+      ctx.lineWidth = Math.max(2, s * 0.05);
+      ctx.beginPath();
+      ctx.moveTo(x, y - s * 0.46);
+      ctx.lineTo(x, y - s * 0.62);
+      ctx.stroke();
       ctx.fillStyle = '#2a9d8f';
       ctx.beginPath();
-      ctx.moveTo(x, y - s * 0.42);
-      ctx.lineTo(x - s * 0.2, y - s * 0.62);
-      ctx.lineTo(x + s * 0.2, y - s * 0.62);
+      ctx.moveTo(x, y - s * 0.44);
+      ctx.lineTo(x - s * 0.24, y - s * 0.6);
+      ctx.lineTo(x - s * 0.02, y - s * 0.5);
+      ctx.closePath();
+      ctx.moveTo(x, y - s * 0.44);
+      ctx.lineTo(x + s * 0.24, y - s * 0.6);
+      ctx.lineTo(x + s * 0.02, y - s * 0.5);
       ctx.closePath();
       ctx.fill();
     }
   } else if (kind === 'selada') {
+    ellipse(ctx, x, y + s * 0.12, s * 0.42, s * 0.2, '#2d7a3e');
     ellipse(ctx, x - s * 0.22, y + s * 0.05, s * 0.34, s * 0.22, '#43aa5b');
     ellipse(ctx, x + s * 0.22, y + s * 0.05, s * 0.34, s * 0.22, '#57cc6a');
     ellipse(ctx, x, y - s * 0.12, s * 0.36, s * 0.24, '#74d97e');
     ellipse(ctx, x, y - s * 0.1, s * 0.2, s * 0.12, '#a7f3b0');
+    ctx.strokeStyle = '#2d7a3e';
+    ctx.lineWidth = Math.max(2, s * 0.04);
+    ctx.beginPath();
+    ctx.moveTo(x - s * 0.3, y - s * 0.18);
+    ctx.quadraticCurveTo(x, y + s * 0.05, x + s * 0.3, y - s * 0.18);
+    ctx.stroke();
     if (prep === 'potong') {
       ctx.strokeStyle = '#2d7a3e';
       ctx.lineWidth = 3;
@@ -68,12 +91,16 @@ function drawIngredient(ctx, kind, x, y, s, prep) {
   } else if (kind === 'roti') {
     const crust = prep === 'panggang' ? '#8a5a2b' : '#c98a4b';
     const inner = prep === 'panggang' ? '#e8b06a' : '#f6d9a0';
+    ellipse(ctx, x, y + s * 0.42, s * 0.42, s * 0.08, 'rgba(0,0,0,.18)');
     rr(ctx, x - s * 0.45, y - s * 0.4, s * 0.9, s * 0.8, s * 0.18);
     ctx.fillStyle = crust;
     ctx.fill();
     rr(ctx, x - s * 0.34, y - s * 0.29, s * 0.68, s * 0.58, s * 0.12);
     ctx.fillStyle = inner;
     ctx.fill();
+    ellipse(ctx, x - s * 0.18, y - s * 0.18, s * 0.07, s * 0.04, '#fff3d6');
+    ellipse(ctx, x + s * 0.08, y - s * 0.24, s * 0.07, s * 0.04, '#fff3d6');
+    ellipse(ctx, x + s * 0.2, y - s * 0.1, s * 0.07, s * 0.04, '#fff3d6');
     if (prep === 'panggang') {
       ctx.strokeStyle = '#7a4a1f';
       ctx.lineWidth = 3;
@@ -85,6 +112,7 @@ function drawIngredient(ctx, kind, x, y, s, prep) {
       ctx.stroke();
     }
   } else if (kind === 'keju') {
+    ellipse(ctx, x, y + s * 0.34, s * 0.4, s * 0.07, 'rgba(0,0,0,.15)');
     ctx.fillStyle = '#ffd166';
     ctx.beginPath();
     ctx.moveTo(x - s * 0.45, y + s * 0.3);
@@ -92,16 +120,30 @@ function drawIngredient(ctx, kind, x, y, s, prep) {
     ctx.lineTo(x + s * 0.45, y - s * 0.25);
     ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = '#e9a13b';
+    ctx.lineWidth = Math.max(2, s * 0.04);
+    ctx.beginPath();
+    ctx.moveTo(x - s * 0.45, y + s * 0.3);
+    ctx.lineTo(x + s * 0.45, y - s * 0.25);
+    ctx.stroke();
     circle(ctx, x - s * 0.1, y + s * 0.08, s * 0.09, '#f4a71d');
     circle(ctx, x + s * 0.2, y + s * 0.12, s * 0.07, '#f4a71d');
     circle(ctx, x + s * 0.05, y - s * 0.08, s * 0.06, '#f4a71d');
+    circle(ctx, x - s * 0.28, y + s * 0.14, s * 0.05, '#f4a71d');
+    circle(ctx, x + s * 0.3, y - s * 0.1, s * 0.05, '#ffdf8e');
   }
 }
 
 // Piring putih + isi rakitan di atasnya.
 function drawPlate(ctx, items, x, y, r) {
+  ellipse(ctx, x, y + r * 0.1, r * 1.02, r * 0.34, 'rgba(0,0,0,.14)');
   ellipse(ctx, x, y, r, r * 0.32, '#f8f9fa');
   ellipse(ctx, x, y, r * 0.82, r * 0.24, '#dee2e6');
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(x, y, r * 0.94, r * 0.29, 0, Math.PI * 1.15, Math.PI * 1.85);
+  ctx.stroke();
   if (items.length === 0) {
     txt(ctx, 'piring kosong', x, y - 6, 15, '#8a97a3', 'center');
     return;
@@ -128,12 +170,25 @@ function drawTimerBar(ctx, x, y, w, h, frac) {
 }
 
 function drawButton(ctx, x, y, w, h, label, enabled, hot) {
+  rr(ctx, x + 2, y + 4, w, h, 10);
+  ctx.fillStyle = 'rgba(0,0,0,.25)';
+  ctx.fill();
+  const g = ctx.createLinearGradient(x, y, x, y + h);
+  if (!enabled) { g.addColorStop(0, '#6b7d8c'); g.addColorStop(1, '#546575'); }
+  else if (hot) { g.addColorStop(0, '#ffe082'); g.addColorStop(1, '#ffb703'); }
+  else { g.addColorStop(0, '#37b3a5'); g.addColorStop(1, '#1f7a6e'); }
   rr(ctx, x, y, w, h, 10);
-  ctx.fillStyle = enabled ? (hot ? '#ffd166' : '#2a9d8f') : '#5a6b7a';
+  ctx.fillStyle = g;
   ctx.fill();
   ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(0,0,0,.35)';
+  ctx.strokeStyle = hot ? '#fff3d6' : 'rgba(0,0,0,.35)';
   ctx.stroke();
+  if (hot) {
+    ctx.strokeStyle = 'rgba(255,209,102,.8)';
+    ctx.lineWidth = 4;
+    rr(ctx, x - 3, y - 3, w + 6, h + 6, 12);
+    ctx.stroke();
+  }
   txt(ctx, label, x + w / 2, y + h / 2 + 1, 20, enabled ? '#10231f' : '#d7dee5', 'center', true);
 }
 
