@@ -1,198 +1,79 @@
-// Boot and the one loop: input is read every frame, the world advances in fixed
-// 1/60 s steps (several in a slow frame, none in a fast one), and the renderer
-// paints what is there. The game moves between four screens: title, play, paused
-// and game over.
-//
-// ?seed=N fixes the dealt orders. ?shot=cover|assembly|cooking|serve (with &seed=N)
-// stages that scene instead of running the loop, paints it twice and sets
-// window.__shotReady for a screenshot. ?selftest=1 runs the serve loop headlessly
-// and writes its report into #selftest and the document title.
-
-import { BEST_KEY, STEP, STATIONS } from './config.js';
-import { createWorld, EVENT_ACT, EVENT_DENY, EVENT_OVER, stationById } from './world.js';
-import { ACTION_CONFIRM, ACTION_PAUSE, createInput } from './input.js';
-import { createRenderer, SCREEN_OVER, SCREEN_PAUSED, SCREEN_PLAY, SCREEN_TITLE } from './render.js';
-import { stageShot, runSelfTest } from './shots.js';
-
-/** The longest frame the loop catches up on; a longer stall is dropped, not replayed. */
-const MAX_FRAME = 0.25;
-
-const params = new URLSearchParams(window.location.search);
-const shot = params.get('shot');
-const seedParam = Number.parseInt(params.get('seed') ?? '', 10);
-const seed = Number.isInteger(seedParam) ? seedParam : Math.floor(Math.random() * 4294967296);
-const selftest = params.get('selftest') === '1';
+// main.js — loop utama Dapur Kilat: state, input, demo hook.
+'use strict';
 
 const canvas = document.getElementById('game');
-const status = document.getElementById('status');
-const world = createWorld(seed);
-const renderer = createRenderer(canvas);
+const ctx = canvas.getContext('2d');
 
-function readBest() {
-  try {
-    return Number.parseInt(window.localStorage.getItem(BEST_KEY) ?? '0', 10) || 0;
-  } catch {
-    return 0;
-  }
+const G = {
+  state: 'menu', score: 0, combo: 0, served: 0, missed: 0,
+  elapsed: 0, spawnT: 1.2,
+  orders: [], plate: [], cutting: null, toasting: null,
+  message: '', messageT: 0,
+};
+
+function startGame() {
+  resetGame(G);
+  G.state = 'play';
 }
 
-function saveBest(value) {
-  try {
-    window.localStorage.setItem(BEST_KEY, String(value));
-  } catch {
-    // Storage can be off (private windows): the best score then lasts this visit only.
+function update(dt) {
+  if (G.state !== 'play') return;
+  G.elapsed += dt;
+  if (G.messageT > 0) {
+    G.messageT -= dt;
+    if (G.messageT <= 0) G.message = '';
   }
+  updateOrders(G, dt);
+  updatePrep(G, dt);
+  if (G.elapsed >= 120) G.state = 'over';
 }
 
-function runShot(name) {
-  const scene = stageShot(name, world);
-  let painted = 0;
-  function paint() {
-    renderer.draw(world.state, scene.screen, scene.best);
-    painted += 1;
-    if (painted < 2) requestAnimationFrame(paint);
-    else window.__shotReady = true;
-  }
-  requestAnimationFrame(paint);
+function draw() {
+  drawKitchen(ctx, G);
 }
 
-function runSelftestMode() {
-  const report = runSelfTest(world);
-  const element = document.getElementById('selftest');
-  element.style.display = 'block';
-  element.textContent = JSON.stringify(report, null, 2);
-  document.title = report.pass ? 'SELFTEST:PASS' : 'SELFTEST:FAIL';
-  renderer.draw(world.state, SCREEN_PLAY, world.state.score);
-  window.__shotReady = true;
+let last = 0;
+function loop(t) {
+  const dt = Math.min(0.05, (t - last) / 1000 || 0);
+  last = t;
+  update(dt);
+  draw();
+  requestAnimationFrame(loop);
 }
 
-function stationAt(point) {
-  for (const station of STATIONS) {
-    if (point.x >= station.x - 6 && point.x <= station.x + station.w + 6
-      && point.y >= station.y - 6 && point.y <= station.y + station.h + 6) return station;
-  }
-  return null;
+function canvasPos(e) {
+  const r = canvas.getBoundingClientRect();
+  const sx = canvas.width / r.width;
+  const sy = canvas.height / r.height;
+  return { x: (e.clientX - r.left) * sx, y: (e.clientY - r.top) * sy };
 }
+canvas.addEventListener('click', (e) => {
+  const p = canvasPos(e);
+  if (G.state === 'menu' || G.state === 'over') { startGame(); return; }
+  const btn = hitButton(p.x, p.y);
+  if (btn === 'cut') { doCut(G); return; }
+  if (btn === 'serve') { tryServe(G); return; }
+  const kind = hitBin(p.x, p.y);
+  if (kind) addIngredient(G, kind);
+});
 
-function nearestStation(point, maxDist) {
-  let best = null;
-  let bestDist = maxDist;
-  for (const station of STATIONS) {
-    const dist = Math.hypot(station.anchor.x - point.x, station.anchor.y - point.y);
-    if (dist < bestDist) {
-      bestDist = dist;
-      best = station;
-    }
-  }
-  return best;
-}
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    if (G.state === 'menu' || G.state === 'over') startGame();
+    else doCut(G);
+  } else if (e.code === 'KeyS') {
+    if (G.state === 'play') tryServe(G);
+  } else if (e.code === 'KeyR') {
+    if (G.state === 'over') startGame();
+  } else if (e.code === 'Digit1') addIngredient(G, 'roti');
+  else if (e.code === 'Digit2') addIngredient(G, 'selada');
+  else if (e.code === 'Digit3') addIngredient(G, 'tomat');
+  else if (e.code === 'Digit4') addIngredient(G, 'keju');
+});
 
-function runGame() {
-  const input = createInput(canvas);
-  let screen = SCREEN_TITLE;
-  let best = readBest();
-  let held = null;
-  let accumulator = 0;
-  let last = performance.now();
+// Hook demo untuk screenshot fase 2: ?demo=cover|rakit|masak|saji
+const demo = new URLSearchParams(location.search).get('demo');
+if (demo) demoPreset(G, demo);
 
-  // Screen readers (and anyone watching the page's text) hear the screen changes.
-  function announce(message) {
-    status.textContent = message;
-  }
-
-  function startGame() {
-    world.reset();
-    accumulator = 0;
-    held = null;
-    screen = SCREEN_PLAY;
-    announce('Bermain. Layani pesanan sebelum waktunya habis.');
-  }
-
-  function endGame() {
-    screen = SCREEN_OVER;
-    if (world.state.score > best) {
-      best = world.state.score;
-      saveBest(best);
-    }
-    announce(`Shift selesai. Skor ${world.state.score}. Terbaik ${best}.`);
-  }
-
-  function handleActions() {
-    const actions = input.takeActions();
-    const point = input.takeClick();
-    const number = input.takeNumber();
-    if (actions & ACTION_PAUSE && (screen === SCREEN_PLAY || screen === SCREEN_PAUSED)) {
-      screen = screen === SCREEN_PLAY ? SCREEN_PAUSED : SCREEN_PLAY;
-      announce(screen === SCREEN_PAUSED ? 'Jeda.' : 'Bermain.');
-      return;
-    }
-    if (screen === SCREEN_TITLE || screen === SCREEN_OVER) {
-      if (actions & ACTION_CONFIRM) startGame();
-      return;
-    }
-    if (screen !== SCREEN_PLAY) return;
-    if (number >= 1 && number <= 6) {
-      const bins = STATIONS.filter((s) => s.kind === 'bin');
-      const bin = bins[number - 1];
-      if (bin) held = { interact: bin.id };
-      return;
-    }
-    if (point) {
-      const station = stationAt(point);
-      if (station) held = { interact: station.id };
-      else held = { tx: point.x, ty: point.y };
-      return;
-    }
-    if (actions & ACTION_CONFIRM) {
-      const near = nearestStation(world.state.chef, 90);
-      if (near) held = { interact: near.id };
-      return;
-    }
-    const dir = input.direction();
-    if (dir.x !== 0 || dir.y !== 0) {
-      const chef = world.state.chef;
-      held = { tx: chef.x + dir.x * 90, ty: chef.y + dir.y * 90 };
-    }
-  }
-
-  function step() {
-    if (screen === SCREEN_TITLE) {
-      world.step(STEP, null, true);
-      return;
-    }
-    const events = world.step(STEP, held, false);
-    if (events & (EVENT_ACT | EVENT_DENY)) held = null;
-    if (events & EVENT_OVER) endGame();
-  }
-
-  function frame(now) {
-    requestAnimationFrame(frame);
-    accumulator += Math.min((now - last) / 1000, MAX_FRAME);
-    last = now;
-    handleActions();
-    if (screen === SCREEN_TITLE || screen === SCREEN_PLAY) {
-      while (accumulator >= STEP && (screen === SCREEN_TITLE || screen === SCREEN_PLAY)) {
-        step();
-        accumulator -= STEP;
-      }
-    } else {
-      accumulator = 0;
-    }
-    renderer.draw(world.state, screen, best);
-  }
-
-  // Leaving the tab pauses a running game rather than letting orders burn unseen.
-  document.addEventListener('visibilitychange', () => {
-    if (document.hidden && screen === SCREEN_PLAY) {
-      screen = SCREEN_PAUSED;
-      announce('Jeda.');
-    }
-  });
-
-  announce('Dapur Kilat. Tekan Spasi atau klik untuk mulai.');
-  requestAnimationFrame(frame);
-}
-
-if (selftest) runSelftestMode();
-else if (shot) runShot(shot);
-else runGame();
+requestAnimationFrame(loop);
