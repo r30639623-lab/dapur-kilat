@@ -144,6 +144,9 @@ function drawPlate(ctx, items, x, y, r) {
   ctx.beginPath();
   ctx.ellipse(x, y, r * 0.94, r * 0.29, 0, Math.PI * 1.15, Math.PI * 1.85);
   ctx.stroke();
+  const kinds = items.map(function (it) { return it.kind; });
+  const full = items.length === 4 && ['roti', 'selada', 'tomat', 'keju'].every(function (k) { return kinds.indexOf(k) >= 0; });
+  if (full) { drawBurger(ctx, x, y); return; }
   if (items.length === 0) {
     txt(ctx, 'piring kosong', x, y - 6, 15, '#8a97a3', 'center');
     return;
@@ -153,6 +156,36 @@ function drawPlate(ctx, items, x, y, r) {
     drawIngredient(ctx, it.kind, ox, y - 18, 44, it.prep);
     ox += 52;
   }
+}
+
+// Burger lengkap berlapis: roti bawah, keju meleleh, tomat, selada, roti atas.
+function drawBurger(ctx, x, y) {
+  ellipse(ctx, x, y + 18, 48, 11, '#c98a4b');
+  ellipse(ctx, x, y + 17, 44, 9, '#f6d9a0');
+  ellipse(ctx, x, y + 8, 48, 8, '#ffd166');
+  circle(ctx, x - 26, y + 14, 5, '#ffd166');
+  circle(ctx, x + 6, y + 15, 5, '#ffd166');
+  circle(ctx, x + 28, y + 14, 5, '#ffd166');
+  circle(ctx, x - 18, y - 2, 13, '#e63946');
+  circle(ctx, x + 18, y - 2, 13, '#d62828');
+  circle(ctx, x - 18, y - 2, 8, '#ff7a85');
+  circle(ctx, x + 18, y - 2, 8, '#ff7a85');
+  ellipse(ctx, x, y - 12, 50, 9, '#57cc6a');
+  circle(ctx, x - 30, y - 12, 7, '#74d97e');
+  circle(ctx, x + 30, y - 12, 7, '#74d97e');
+  ctx.fillStyle = '#f6d9a0';
+  ctx.beginPath();
+  ctx.arc(x, y - 12, 46, Math.PI, 0);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#c98a4b';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(x, y - 12, 46, Math.PI, 0);
+  ctx.stroke();
+  ellipse(ctx, x - 20, y - 32, 4, 2.5, '#fff3d6');
+  ellipse(ctx, x + 2, y - 40, 4, 2.5, '#fff3d6');
+  ellipse(ctx, x + 22, y - 30, 4, 2.5, '#fff3d6');
 }
 
 // Bar timer: hijau -> kuning -> merah.
@@ -194,11 +227,12 @@ function drawButton(ctx, x, y, w, h, label, enabled, hot) {
 
 // Kartu pesanan: nama resep + ikon bahan + bar timer.
 function drawOrderCard(ctx, o, x, y, w, h) {
+  const urgent = !o.done && !o.failed && o.t <= 5;
   rr(ctx, x, y, w, h, 10);
-  ctx.fillStyle = o.done ? '#2a9d8f' : '#fff8e7';
+  ctx.fillStyle = o.done ? '#2a9d8f' : (urgent ? '#ffe3e3' : '#fff8e7');
   ctx.fill();
-  ctx.lineWidth = 2;
-  ctx.strokeStyle = o.failed ? '#ef476f' : '#d9a441';
+  ctx.lineWidth = urgent ? 4 : 2;
+  ctx.strokeStyle = (o.failed || urgent) ? '#ef476f' : '#d9a441';
   ctx.stroke();
   txt(ctx, o.recipe.name, x + 12, y + 18, 16, '#333333', 'left', true);
   let ix = x + 16;
@@ -207,5 +241,9 @@ function drawOrderCard(ctx, o, x, y, w, h) {
     ix += 40;
   }
   drawTimerBar(ctx, x + 12, y + h - 18, w - 24, 10, o.t / o.max);
-  txt(ctx, Math.ceil(o.t) + ' dtk', x + w - 12, y + 18, 14, '#555555', 'right', true);
+  txt(ctx, Math.ceil(o.t) + ' dtk', x + w - 12, y + 18, 14, urgent ? '#d62828' : '#555555', 'right', true);
+  if (urgent) {
+    circle(ctx, x + w - 14, y + h - 34, 11, '#ef476f');
+    txt(ctx, '!', x + w - 14, y + h - 33, 14, '#ffffff', 'center', true);
+  }
 }

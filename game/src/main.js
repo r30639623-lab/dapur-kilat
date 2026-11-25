@@ -8,7 +8,7 @@ const G = {
   state: 'menu', score: 0, combo: 0, served: 0, missed: 0,
   elapsed: 0, spawnT: 1.2,
   orders: [], plate: [], cutting: null, toasting: null,
-  message: '', messageT: 0,
+  message: '', messageT: 0, floaters: [],
 };
 
 function startGame() {
@@ -22,6 +22,12 @@ function update(dt) {
   if (G.messageT > 0) {
     G.messageT -= dt;
     if (G.messageT <= 0) G.message = '';
+  }
+  for (let i = G.floaters.length - 1; i >= 0; i--) {
+    const f = G.floaters[i];
+    f.t -= dt;
+    f.y -= 28 * dt;
+    if (f.t <= 0) G.floaters.splice(i, 1);
   }
   updateOrders(G, dt);
   updatePrep(G, dt);

@@ -135,6 +135,7 @@ function tryServe(G) {
     G.served++;
     G.orders.splice(idx, 1);
     G.plate = [];
+    G.floaters.push({ x: 1070, y: 280, text: '+' + pts + '!', t: 2.5 });
     setMsg(G, o.recipe.name + ' disajikan! +' + pts + (G.combo >= 2 ? ' (kombo x' + G.combo + ')' : ''));
   } else {
     G.plate = [];
@@ -147,7 +148,7 @@ function resetGame(G) {
   G.score = 0; G.combo = 0; G.served = 0; G.missed = 0;
   G.elapsed = 0; G.spawnT = 1.2;
   G.orders = []; G.plate = []; G.cutting = null; G.toasting = null;
-  G.message = ''; G.messageT = 0;
+  G.message = ''; G.messageT = 0; G.floaters = [];
 }
 
 // Preset demo untuk screenshot fase 2 (render asli kode game sendiri).
@@ -184,7 +185,7 @@ function demoPreset(G, kind) {
     G.state = 'play';
     G.orders = [
       { id: 907, recipe: RECIPES[2], t: 30, max: 30, done: false, failed: false },
-      { id: 908, recipe: RECIPES[3], t: 18, max: 35, done: false, failed: false },
+      { id: 908, recipe: RECIPES[3], t: 4, max: 35, done: false, failed: false },
     ];
     G.plate = [{ kind: 'selada', prep: 'potong' }];
     G.toasting = { kind: 'roti', prog: 0.6 };
@@ -203,5 +204,6 @@ function demoPreset(G, kind) {
     ];
     G.score = 340; G.combo = 2; G.served = 2;
     setMsg(G, 'Burger Kilat siap disajikan!');
+    G.floaters.push({ x: 1070, y: 225, text: '+164!', t: 2.5 });
   }
 }
