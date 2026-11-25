@@ -85,6 +85,9 @@ export function createRenderer(canvas) {
       ctx.beginPath();
       ctx.ellipse(0, s * 0.12, s * 0.62, s * 0.42, 0, Math.PI, 0);
       ctx.fill();
+      ctx.strokeStyle = '#b09a7a';
+      ctx.lineWidth = Math.max(1.5, s * 0.06);
+      ctx.stroke();
       ctx.fillStyle = 'rgba(0,0,0,0.18)';
       for (let i = 0; i < 5; i += 1) {
         ctx.beginPath();
@@ -221,8 +224,12 @@ export function createRenderer(canvas) {
       text(`Rp${order.recipe.price}`, 256, y + 16, 13, PALETTE.warn, 'right');
       order.recipe.needs.forEach((need, i) => {
         const cx = 56 + i * 52;
+        ctx.strokeStyle = stateColor(need.state);
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(cx, y + 38, 16, 0, Math.PI * 2);
+        ctx.stroke();
         drawIcon(need.kind, need.state, cx, y + 38, 13);
-        text(stateLabel(need.state), cx, y + 38, 0, '#000', 'center');
       });
       const fraction = Math.max(0, order.patience / order.maxPatience);
       const color = fraction > 0.5 ? PALETTE.good : fraction > 0.25 ? PALETTE.warn : PALETTE.bad;
